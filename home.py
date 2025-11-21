@@ -8,7 +8,9 @@ import numpy as np
 from PIL import Image
 import base64 
 
-YEAR = 2025 
+YEAR = 2025
+FONT_SIZE = 14  # 테이블 폰트 크기 (px)
+ALIGN = "center"  # 테이블 텍스트 정렬 (left, center, right) 
 
 logo = Image.open('./assets/logo1.jpg')  # 또는 'assets/logo.png'
 def get_base64_image(image_path):
@@ -699,47 +701,88 @@ result_df, 총점 = calculate_weight_table(
 예상_등급, 예상_순위 = get_grade_and_rank(총점, CATEGORY)
 
 # 첫 번째 행 - 두 개의 섹션
+st.markdown(f'<div class="section-title" style="background-color: #add8e6;">선택한 국가: {COUNTRY}</div>', unsafe_allow_html=True)
+
 col1, col2 = st.columns([1.5, 1])
 
 with col1:
-    st.markdown(f'<div class="section-title">선택한 국가: {COUNTRY}</div>', unsafe_allow_html=True)
+    # 투자 계획 테이블 데이터 (HTML 테이블로 생성)
+    table_html = f'<table style="width: 100%; border-collapse: collapse; font-size: {FONT_SIZE}px;">'
+    table_html += '<thead><tr style="background-color: #e6e6e6;">'
+    table_html += '<th style="border: 1px solid #000; padding: 5px; text-align: center;">분류 (1)</th>'
+    table_html += '<th style="border: 1px solid #000; padding: 5px; text-align: center;">분류 (2)</th>'
+    table_html += '<th style="border: 1px solid #000; padding: 5px; text-align: center;">단위</th>'
+    table_html += '<th style="border: 1px solid #000; padding: 5px; text-align: center; background-color: #add8e6;">값</th>'
+    table_html += '</tr></thead><tbody>'
     
-    # 투자 계획 테이블 데이터
-    invest_data = [
-        ['분류 (1)', '분류 (2)', '단위', '값'],
-        ['기본정보', '연간매출', f'{단위_연간매출}', f'{연간매출_기본값:,}'],
-        ['', '연간 출판종수', '건', f'{연간_출판종수:,}'], 
-        ['', '총 출판종수', '건', f'{총_출판종수:,}'],
-    ]
+    # 기본정보 행들
+    table_html += f'<tr><td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">기본정보</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">연간매출</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN}; background-color: #ffff99;">{단위_연간매출}</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{연간매출_기본값:,}</td></tr>'
+    
+    table_html += f'<tr><td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};"></td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">연간 출판종수</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">건</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{연간_출판종수:,}</td></tr>'
+    
+    table_html += f'<tr><td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};"></td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">총 출판종수</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">건</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{총_출판종수:,}</td></tr>'
     
     # 퍼블릭도메인이 아닐 때만 선인세, 인세 추가
     if CATEGORY != '퍼블릭도메인':
-        invest_data.extend([
-            ['계약조건', '선인세', f'{단위_선인세}', f'{선인세_기본값:,}'],
-            ['', '인세 (최소)', '%', f'{인세_MIN:.2%}'],
-            ['', '인세 (최대)', '%', f'{인세_MAX:.2%}'],
-        ])
+        table_html += f'<tr><td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">계약조건</td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">선인세</td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN}; background-color: #ffff99;">{단위_선인세}</td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{선인세_기본값:,}</td></tr>'
+        
+        table_html += f'<tr><td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};"></td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">인세 (최소)</td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">%</td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{인세_MIN:.2%}</td></tr>'
+        
+        table_html += f'<tr><td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};"></td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">인세 (최대)</td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">%</td>'
+        table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{인세_MAX:.2%}</td></tr>'
     
-    invest_data.append(['계약조건', '초판계약부수', '권', f'{초판계약부수:,}'])
+    table_html += f'<tr><td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">계약조건</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">초판계약부수</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">권</td>'
+    table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{초판계약부수:,}</td></tr>'
     
-    df_invest = pd.DataFrame(invest_data[1:], columns=invest_data[0])
-    st.dataframe(df_invest, use_container_width=True, hide_index=True)
+    table_html += '</tbody></table>'
+    st.markdown(table_html, unsafe_allow_html=True)
 
 with col2:
     # GDP 보정 비중 표시
-    st.markdown('<div class="section-title">GDP 보정 비중</div>', unsafe_allow_html=True)
-    st.markdown('<div class="red-header">GDP 보정 비중</div>', unsafe_allow_html=True)
-    st.markdown(f'<div style="text-align: center; border: 1px solid #ccc; padding: 5px;">{GDP_보정_비중:.4f}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="red-header" style="font-size: {FONT_SIZE}px;">GDP 보정 비중</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align: center; border: 1px solid #ccc; padding: 5px; font-size: {FONT_SIZE}px;">{GDP_보정_비중:.4f}</div>', unsafe_allow_html=True)
     
     # 환율 정보 표시
     st.markdown(f'<div class="section-title">환율 정보 ({YEAR})</div>', unsafe_allow_html=True)
     
     if not currency_weights.empty:
-        # 환율 테이블 데이터 준비
+        # 환율 테이블 HTML 생성
         currency_display = currency_weights.copy()
         currency_display['USD 대비 상대 가치'] = currency_display['USD 대비 상대 가치'].apply(lambda x: f"{x:.3f}")
-        currency_display.columns = ['기준 통화', '대미 환산율']
-        st.dataframe(currency_display, use_container_width=True, hide_index=True)
+        
+        currency_table_html = f'<table style="width: 100%; border-collapse: collapse; font-size: {FONT_SIZE}px;">'
+        currency_table_html += '<thead><tr style="background-color: #e6e6e6;">'
+        currency_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">기준 통화</th>'
+        currency_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">대미 환산율</th>'
+        currency_table_html += '</tr></thead><tbody>'
+        
+        for _, row in currency_display.iterrows():
+            currency_table_html += f'<tr>'
+            currency_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{row["통화"]}</td>'
+            currency_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{row["USD 대비 상대 가치"]}</td>'
+            currency_table_html += '</tr>'
+        
+        currency_table_html += '</tbody></table>'
+        st.markdown(currency_table_html, unsafe_allow_html=True)
     else:
         st.write("환율 정보를 불러올 수 없습니다.")
 
@@ -747,20 +790,26 @@ with col2:
 col3, col4 = st.columns([1, 1.5])
 
 with col3:
-    st.markdown(f'<div class="section-title">({YEAR}) 등급 분류 결과</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-title" style="background-color: #add8e6;">({YEAR}) 등급 분류 결과</div>', unsafe_allow_html=True)
     
     # 예상 순위가 제대로 계산되었는지 확인
     if 예상_순위 is None or 예상_순위 == '':
         예상_순위 = '계산 중...'
     
-    target_data = {
-        '예상 등급': [예상_등급],
-        '총점': [f'{총점:.3f}'],
-        '예상 순위': [예상_순위]
-    }
-    
-    df_target = pd.DataFrame(target_data)
-    st.dataframe(df_target, use_container_width=True, hide_index=True)
+    # 등급 분류 결과 테이블 HTML 생성
+    target_table_html = f'<table style="width: 100%; border-collapse: collapse; font-size: {FONT_SIZE}px;">'
+    target_table_html += '<thead><tr style="background-color: #e6e6e6;">'
+    target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">예상 등급</th>'
+    target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">총점</th>'
+    target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">예상 순위</th>'
+    target_table_html += '</tr></thead><tbody>'
+    target_table_html += f'<tr>'
+    target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{예상_등급}</td>'
+    target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{총점:.3f}</td>'
+    target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{예상_순위}</td>'
+    target_table_html += '</tr>'
+    target_table_html += '</tbody></table>'
+    st.markdown(target_table_html, unsafe_allow_html=True)
 
 with col4:
     st.markdown('<div class="section-title">(*) 등급 구간표</div>', unsafe_allow_html=True)
@@ -770,17 +819,24 @@ with col4:
     rank_ranges = grade_ranges['rank_ranges']
     score_ranges = grade_ranges['score_ranges']
     
-    portfolio_data = [
-        ['등급 분류', '총계 급간', '순위 급간'],
-        ['S', score_ranges['S'] if score_ranges['S'] else '', rank_ranges['S']],
-        ['A', score_ranges['A'] if score_ranges['A'] else '', rank_ranges['A']],
-        ['B', score_ranges['B'] if score_ranges['B'] else '', rank_ranges['B']],
-        ['C', score_ranges['C'] if score_ranges['C'] else '', rank_ranges['C']],
-        ['D', score_ranges['D'] if score_ranges['D'] else '', rank_ranges['D']]
-    ]
+    # 등급 구간표 테이블 HTML 생성
+    portfolio_table_html = f'<table style="width: 100%; border-collapse: collapse; font-size: {FONT_SIZE}px;">'
+    portfolio_table_html += '<thead><tr style="background-color: #e6e6e6;">'
+    portfolio_table_html += '<th style="border: 1px solid #000; padding: 5px; text-align: center;">등급 분류</th>'
+    portfolio_table_html += '<th style="border: 1px solid #000; padding: 5px; text-align: center;">총계 급간</th>'
+    portfolio_table_html += '<th style="border: 1px solid #000; padding: 5px; text-align: center;">순위 급간</th>'
+    portfolio_table_html += '</tr></thead><tbody>'
     
-    df_portfolio = pd.DataFrame(portfolio_data[1:], columns=portfolio_data[0])
-    st.dataframe(df_portfolio, use_container_width=True, hide_index=True)
+    grades = ['S', 'A', 'B', 'C', 'D']
+    for grade in grades:
+        portfolio_table_html += f'<tr>'
+        portfolio_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{grade}</td>'
+        portfolio_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{score_ranges[grade] if score_ranges[grade] else ""}</td>'
+        portfolio_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{rank_ranges[grade] if rank_ranges[grade] else ""}</td>'
+        portfolio_table_html += '</tr>'
+    
+    portfolio_table_html += '</tbody></table>'
+    st.markdown(portfolio_table_html, unsafe_allow_html=True)
 
 # 하단 노트 섹션
 st.markdown("""
@@ -788,7 +844,7 @@ st.markdown("""
 <strong>(*) 값 입력 방법</strong><br>
 - 각 출판사의 번역지원서 내 기재된 항목을 '값' 열에 기입<br>
 - '인세'의 경우 최소 값과 최대 값을 각각 기재<br>
-  (e.g. 하드커버 8%, 소프트커버 10% => 최소 8% / 최대 10% 기입<br>
+  (e.g. 하드커버 8%, 소프트커버 10% => 최소 8% / 최대 10% 기입 (단, 백분율은 소수 형태로 기입해주세요.)<br>
 - '인세'가 단일 값인 경우, 최소와 최대를 동일하게 기재<br>
   (e.g. 하드커버/소프트커버 10% => 최소 10% / 최대 10% 기입)
 </div>
