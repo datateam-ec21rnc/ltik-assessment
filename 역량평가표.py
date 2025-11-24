@@ -550,6 +550,7 @@ CATEGORY = st.selectbox(
 # CATEGORY가 변경되면 세션 상태 업데이트 및 페이지 새로고침
 if st.session_state.category != CATEGORY:
     st.session_state.category = CATEGORY
+    st.session_state.calculated = False  # 카테고리 변경 시 계산 상태 초기화
     st.rerun()
     
 # CSS 스타일링
@@ -656,6 +657,16 @@ else:
 
 초판계약부수 = st.sidebar.number_input("**‧ 초판계약부수**", value=10000, min_value=0)
 
+# 계산하기 버튼 추가
+calculate_button = st.sidebar.button("🧮 계산하기", type="primary", use_container_width=True)
+
+# 버튼 클릭 여부를 세션 스테이트로 관리
+if 'calculated' not in st.session_state:
+    st.session_state.calculated = False
+
+if calculate_button:
+    st.session_state.calculated = True
+
 # GDP 보정 비중 가져오기
 GDP_보정_비중 = get_gdp_weight(COUNTRY)
 
@@ -688,17 +699,25 @@ else:
     선인세_환율 = None
     currency_rate = 1.0  # 기본값 설정 (사용되지 않지만 에러 방지)
 
-# AHP 테이블 가져오기
-ahp_df = get_ahp_table()
+# 계산 및 결과 표시 (버튼 클릭 시에만)
+if st.session_state.calculated:
+    # AHP 테이블 가져오기
+    ahp_df = get_ahp_table()
 
-# 총점 계산
-result_df, 총점 = calculate_weight_table(
-    ahp_df, 연간매출_USD, GDP_보정_비중, 선인세_환율, 
-    인세_MIN, 인세_MAX, 초판계약부수, 연간_출판종수, 총_출판종수, CATEGORY
-)
+    # 총점 계산
+    result_df, 총점 = calculate_weight_table(
+        ahp_df, 연간매출_USD, GDP_보정_비중, 선인세_환율, 
+        인세_MIN, 인세_MAX, 초판계약부수, 연간_출판종수, 총_출판종수, CATEGORY
+    )
 
-# 등급 및 순위 계산
-예상_등급, 예상_순위 = get_grade_and_rank(총점, CATEGORY)
+    # 등급 및 순위 계산
+    예상_등급, 예상_순위 = get_grade_and_rank(총점, CATEGORY)
+else:
+    # 초기 상태 (버튼을 누르기 전)
+    result_df = pd.DataFrame()
+    총점 = 0.0
+    예상_등급 = "-"
+    예상_순위 = "-"
 
 # 첫 번째 행 - 두 개의 섹션
 st.markdown(f'<div class="section-title" style="background-color: #add8e6;">선택한 국가: {COUNTRY}</div>', unsafe_allow_html=True)
@@ -792,24 +811,29 @@ col3, col4 = st.columns([1, 1.5])
 with col3:
     st.markdown(f'<div class="section-title" style="background-color: #add8e6;">({YEAR}) 등급 분류 결과</div>', unsafe_allow_html=True)
     
-    # 예상 순위가 제대로 계산되었는지 확인
-    if 예상_순위 is None or 예상_순위 == '':
-        예상_순위 = '계산 중...'
-    
-    # 등급 분류 결과 테이블 HTML 생성
-    target_table_html = f'<table style="width: 100%; border-collapse: collapse; font-size: {FONT_SIZE}px;">'
-    target_table_html += '<thead><tr style="background-color: #e6e6e6;">'
-    target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">예상 등급</th>'
-    target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">총점</th>'
-    target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">예상 순위</th>'
-    target_table_html += '</tr></thead><tbody>'
-    target_table_html += f'<tr>'
-    target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{예상_등급}</td>'
-    target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{총점:.3f}</td>'
-    target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{예상_순위}</td>'
-    target_table_html += '</tr>'
-    target_table_html += '</tbody></table>'
-    st.markdown(target_table_html, unsafe_allow_html=True)
+    if not st.session_state.calculated:
+        # 버튼을 누르기 전 안내 메시지
+        st.info("👈 왼쪽 사이드바에서 값을 입력한 후 '계산하기' 버튼을 클릭하세요.")
+    else:
+        # 예상 순위가 제대로 계산되었는지 확인
+        if 예상_순위 is None or 예상_순위 == '':
+            예상_순위 = '계산 중...'
+        
+        # 등급 분류 결과 테이블 HTML 생성 (캡션 포함)
+        target_table_html = f'<table style="width: 100%; border-collapse: collapse; font-size: {FONT_SIZE}px; margin-bottom: 0;">'
+        target_table_html += '<thead><tr style="background-color: #e6e6e6;">'
+        target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">예상 등급</th>'
+        target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">총점</th>'
+        target_table_html += f'<th style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">예상 순위*</th>'
+        target_table_html += '</tr></thead><tbody>'
+        target_table_html += f'<tr>'
+        target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{예상_등급}</td>'
+        target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{총점:.3f}</td>'
+        target_table_html += f'<td style="border: 1px solid #000; padding: 5px; text-align: {ALIGN};">{예상_순위}</td>'
+        target_table_html += '</tr>'
+        target_table_html += '</tbody></table>'
+        target_table_html += '<p style="font-size: 0.85em; color: #666; text-align: right; margin: 2px 0 0 0;">* 위 총점 기반으로 산출한 예상 순위이며, 실제 순위와는 ±1 수준의 오차가 발생할 수 있습니다.</p>'
+        st.markdown(target_table_html, unsafe_allow_html=True)
 
 with col4:
     st.markdown('<div class="section-title">(*) 등급 구간표</div>', unsafe_allow_html=True)
@@ -861,19 +885,20 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 디버깅 정보 (개발시에만 표시)
-if st.sidebar.checkbox("디버깅 정보 표시"):
-    st.sidebar.write("### 계산 결과")
-    st.sidebar.write(f"GDP 보정 비중: {GDP_보정_비중}")
-    st.sidebar.write(f"연간매출 화폐: {단위_연간매출}")
-    st.sidebar.write(f"연간매출 환율: {연간매출_currency_rate:.6f}")
-    st.sidebar.write(f"연간매출 USD 변환: {연간매출_USD:.2f} USD")
-    if CATEGORY != '퍼블릭도메인':
-        st.sidebar.write(f"선인세 화폐: {단위_선인세}")
-        st.sidebar.write(f"선인세 환율: {currency_rate:.6f}")
-        st.sidebar.write(f"선인세 USD 변환: {선인세_환율:.2f} USD")
-    st.sidebar.write(f"총점: {총점:.3f}")
-    if not result_df.empty:
-        st.sidebar.write("### 세부 점수")
-        st.sidebar.write("아래 테이블을 합산한 값이 총점입니다.")
-        st.sidebar.dataframe(result_df.T)
+# # 디버깅 정보 (개발시에만 표시)
+# if st.sidebar.checkbox("계산 과정 표시"):
+#     st.sidebar.write("### 계산 결과")
+#     st.sidebar.write(f"GDP 보정 비중: {GDP_보정_비중}")
+#     st.sidebar.write(f"연간매출 화폐: {단위_연간매출}")
+#     st.sidebar.write(f"연간매출 환율: {연간매출_currency_rate:.6f}")
+#     st.sidebar.write(f"연간매출 USD 변환: {연간매출_USD:.2f} USD")
+#     if CATEGORY != '퍼블릭도메인':
+#         st.sidebar.write(f"선인세 화폐: {단위_선인세}")
+#         st.sidebar.write(f"선인세 환율: {currency_rate:.6f}")
+#         st.sidebar.write(f"선인세 USD 변환: {선인세_환율:.2f} USD")
+    
+#     if not result_df.empty:
+#         st.sidebar.write("### 세부 점수")
+#         st.sidebar.write("아래 테이블을 합산한 값이 총점입니다.")
+#         st.sidebar.dataframe(result_df.T)
+#         st.sidebar.write(f"총점: {총점:.3f}")
