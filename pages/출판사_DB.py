@@ -87,7 +87,7 @@ def to_excel(df):
 
 # ---------------------------------- # 
 
-st.header("📊 데이터 확인")
+st.header("📄 데이터 확인")
 st.write("DB의 테이블을 확인하고 엑셀로 다운로드할 수 있습니다.")
 
 # 테이블 목록 조회
@@ -100,12 +100,17 @@ try:
         # st.success(f"총 {len(tables)}개의 테이블을 찾았습니다.")
         pass
         
+        # 기본 선택 테이블 설정
+        default_table = 'publisher_classification'
+        default_index = tables.index(default_table) if default_table in tables else 0
+        
         # 테이블 선택 (매핑된 이름으로 표시)
         selected_table = st.selectbox(
             "조회할 테이블을 선택하세요:",
             tables,
             format_func=lambda x: get_display_name(x),
-            key="table_selector"
+            key="table_selector",
+            index=default_index
         )
         
         if selected_table:
@@ -124,17 +129,17 @@ try:
                 st.dataframe(df, use_container_width=True, height=400)
                 
                 # 엑셀 다운로드 버튼
-                # st.divider()
-                st.subheader("📥 엑셀 다운로드")
-                
                 excel_data = to_excel(df)
                 display_name = get_display_name(selected_table)
+                
                 st.download_button(
-                    label=f"📥 {display_name}.xlsx 다운로드",
+                    label=f"📥 데이터 다운로드 ({display_name}.xlsx)",
                     data=excel_data,
                     file_name=f"{display_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key=f"download_{selected_table}"
+                    key=f"download_{selected_table}",
+                    use_container_width=True,
+                    type="primary"
                 )
                 
             except Exception as e:
@@ -147,7 +152,6 @@ except Exception as e:
     st.exception(e) 
 
 # 푸터
-st.markdown("---")
 st.markdown("""
 <div style="display: flex; justify-content: space-between; align-items: center;">
     <div style="font-size: 0.9em; color: #666;">출판사 역량분석 시스템 v2.0</div>
