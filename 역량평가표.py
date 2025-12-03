@@ -68,16 +68,26 @@ def get_currency_weights():
         conn.close()
 
 # 고정(종합출판사, 시 전문 출판사, 퍼블릭토메인)
-def get_ahp_table():
+def get_ahp_table(category='종합출판사'):
     """AHP 테이블 생성 (데이터만 반환)"""
-    ahp_df = pd.DataFrame({
-        '연간매출': [0.141],
-        '출판종수_연간': [0.085],
-        '출판종수_총계': [0.073],
-        '선인세': [0.315],
-        '인세': [0.145],
-        '초판계약부수': [0.240],
-    })
+    if category == '퍼블릭도메인':
+        # 퍼블릭도메인용 AHP 가중치 (선인세, 인세 제외)
+        ahp_df = pd.DataFrame({
+            '연간매출': [0.283],
+            '출판종수_연간': [0.159],
+            '출판종수_총계': [0.126],
+            '초판계약부수': [0.431],
+        })
+    else:
+        # 종합출판사, 시전문출판사용 AHP 가중치
+        ahp_df = pd.DataFrame({
+            '연간매출': [0.141],
+            '출판종수_연간': [0.085],
+            '출판종수_총계': [0.073],
+            '선인세': [0.315],
+            '인세': [0.145],
+            '초판계약부수': [0.240],
+        })
     return ahp_df
 
 def calculate_statistics_from_db(category):
@@ -701,8 +711,8 @@ else:
 
 # 계산 및 결과 표시 (버튼 클릭 시에만)
 if st.session_state.calculated:
-    # AHP 테이블 가져오기
-    ahp_df = get_ahp_table()
+    # AHP 테이블 가져오기 (카테고리 전달)
+    ahp_df = get_ahp_table(CATEGORY)
 
     # 총점 계산
     result_df, 총점 = calculate_weight_table(
