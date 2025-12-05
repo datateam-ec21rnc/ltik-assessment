@@ -413,11 +413,26 @@ def get_grade_ranges_by_percentage(category):
         total_count = len(df)
         
         # 비율에 따른 개수 계산 (반올림)
-        s_count = int(round(total_count * 0.30))
-        a_count = int(round(total_count * 0.25))
-        b_count = int(round(total_count * 0.20))
-        c_count = int(round(total_count * 0.15))
+        if category == '퍼블릭도메인':
+            # 퍼블릭도메인용 비율
+            s_count = int(round(total_count * 0.289))
+            a_count = int(round(total_count * 0.244))
+            b_count = int(round(total_count * 0.200))
+            c_count = int(round(total_count * 0.156))
+        elif category == '시전문출판사':
+            # 시전문출판사 비율
+            s_count = int(round(total_count * 0.273))
+            a_count = int(round(total_count * 0.273))
+            b_count = int(round(total_count * 0.182))
+            c_count = int(round(total_count * 0.182))
+        else:
+            # 종합출판사용 비율
+            s_count = int(round(total_count * 0.297))
+            a_count = int(round(total_count * 0.251))
+            b_count = int(round(total_count * 0.201))
+            c_count = int(round(total_count * 0.165))
         d_count = total_count - s_count - a_count - b_count - c_count  # 나머지
+        print(f"> 실제 갯수 (AHP){a_count}, {b_count}, {c_count}, {d_count}")
         
         # 순위 범위 계산
         s_start, s_end = 1, s_count
