@@ -472,13 +472,15 @@ def get_grade_ranges_by_percentage(category):
             'C': format_rank_range(c_start, c_end) if c_count > 0 else '',
             'D': format_rank_range(d_start, d_end) if d_count > 0 else ''
         }
+        # D 등급의 점수 범위는 C 등급의 최소값 미만으로 표시
+        c_min_score = c_scores.min() if len(c_scores) > 0 and not pd.isna(c_scores.min()) else None
         
         score_ranges = {
             'S': format_score_range(s_scores.min(), s_scores.max()) if len(s_scores) > 0 else '',
             'A': format_score_range(a_scores.min(), a_scores.max()) if len(a_scores) > 0 else '',
             'B': format_score_range(b_scores.min(), b_scores.max()) if len(b_scores) > 0 else '',
             'C': format_score_range(c_scores.min(), c_scores.max()) if len(c_scores) > 0 else '',
-            'D': format_score_range(d_scores.min(), d_scores.max()) if len(d_scores) > 0 else ''
+            'D': f'{c_min_score:.2f} 미만' if c_min_score is not None else ''
         }
         
         return {
